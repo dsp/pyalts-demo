@@ -8,6 +8,13 @@ class NoPathExists(Exception):
     pass
 
 def bfs(start, goal, fn_neighbours, maxcount=None):
+    """
+    Returns a list of all shortest paths from start
+    to goal given the neighbours funciton fn_neighbours.
+
+    fb_neighbours must return a list of unique identifiers
+    for adjacent nodes.
+    """
     queue = [(start, [start])]
     seen = set()
     results = []
@@ -61,7 +68,9 @@ def find(start, goal, fn_neighbours, fn_weight, fn_distance):
     pq = []
     heappush(pq, (fn_distance(start, goal), start))
     while openset:
-        _, current = heappop(pq)
+        f, current = heappop(pq)
+        if current == None:
+            continue
 
         openset.remove(current)
         closedset.add(current)
@@ -75,13 +84,15 @@ def find(start, goal, fn_neighbours, fn_weight, fn_distance):
                 came_from[neighbour] = current
                 g_score[neighbour] = tentative
 
+                f = g_score[neighbour] + fn_distance(neighbour, goal)
                 if neighbour not in openset:
-                    f = g_score[neighbour] + fn_distance(neighbour, goal)
                     openset.add(neighbour)
                     heappush(pq, (f, neighbour))
                 else:
-                    # TODO: DEREASE KEY FOR NEIGHBOUR
-                    pass
+                    for k, (nf, n) in enumerate(pq):
+                        if n == neighbour:
+                            pq[k] = (f, None)
+                    heappush(pq, (f, neighbour))
     raise NoPathExists
 
 if __name__ == '__main__':

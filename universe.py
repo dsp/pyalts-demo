@@ -5,8 +5,8 @@ import math
 from collections import defaultdict
 
 import path
-import config
 
+DB_FILE = 'neweden.sqlite'
 baserange = {'supercarrier': 5,
              'carrier': 6.5,
              'dreadnought': 5,
@@ -67,7 +67,7 @@ def jumpadjacent(neweden, jumprange, maxsec=None):
     return d
 
 def exists(systems):
-    cnx = db.connect(config.CONFIG['database.neweden'])
+    cnx = db.connect(DB_FILE)
     cur = cnx.cursor()
     instr = ','.join(['?'] * len(systems))
     cur.execute("""
@@ -81,7 +81,7 @@ def exists(systems):
 def universe(wormholes=False, maxsec=None):
     if maxsec is None:
         maxsec = security['highsec']
-    cnx = db.connect(config.CONFIG['database.neweden'])
+    cnx = db.connect(DB_FILE)
     cur = cnx.cursor()
 
     excludewspace = ""
@@ -150,17 +150,17 @@ if __name__ == '__main__':
     b = solarsystems[s2.lower()]
 
     fn = lambda x: neighbours(x, connections)
-    direct = map(lambda s: s.name, path.find(a, b, fn, weight, lambda a, b: 1))
+    direct = map(lambda s: s.name, path.find(a, b, fn, weight, distance))
 
     print "%s -> %s" % (s1, s2)
     print "distance:   {:.4f} ly".format(distance(a, b))
     print "path:       [{}]: {}".format(len(direct), u' -> '.join(direct))
 
     def highsec(start, goal):
-        if goal.sec >= security['lowsec']:
-            return 0
+        if start.sec >= security['lowsec'] and goal.sec >= security['lowsec']:
+            return 1000
         else:
-            return 1
+            return 5000
 
-    direct = map(lambda s: s.name, path.find(a, b, fn, highsec, lambda a,b: 1))
+    direct = map(lambda s: s.name, path.find(a, b, fn, highsec, distance))
     print "path (hsec) [{}]: {}".format(len(direct), u' -> '.join(direct))
